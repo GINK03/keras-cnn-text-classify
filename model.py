@@ -39,13 +39,11 @@ def build_model():
   flatten = Flatten()(merged_tensor)
   # reshape = Reshape((3*num_filters,))(merged_tensor)
   dropout = Dropout(drop)(flatten)
-  output = Dense(output_dim=4, activation='softmax')(dropout)
+  output = Dense(output_dim=len(idx_name), activation='softmax')(dropout)
 
   # this creates a model that includes
   model = Model(input=inputs, output=output)
-
   adam = Adam(lr=1e-4, beta_1=0.9, beta_2=0.999, epsilon=1e-08)
-
   model.compile(optimizer=adam, loss='categorical_crossentropy', metrics=['accuracy'])
 
   return model
@@ -59,9 +57,10 @@ voc = {}
 maxlen = 0
 maxwords = 0
 buff = set()
-TARGET_DIR = 'data.r/*'
+TARGET_DIR = 'data.o/*'
 idx_name = {}
-for filename in glob(TARGET_DIR):
+for i, filename in enumerate(glob(TARGET_DIR)):
+    idx_name[i] = filename
     for line in open(filename).read().split('\n'):
        a = list(line)
        maxlen = max(maxlen, len(a))
@@ -69,8 +68,8 @@ for filename in glob(TARGET_DIR):
 maxwords = len(buff)
 print("maxwords %d"%maxwords)
 print("maxlen %d"%maxlen)
+print("idx name len %d"%len(idx_name))
 for i, filename in enumerate(glob(TARGET_DIR)):
-  idx_name[i] = filename
   for line in open(filename).read().split('\n'):
     X = [maxwords]*maxlen
     line = line.strip()
@@ -80,11 +79,10 @@ for i, filename in enumerate(glob(TARGET_DIR)):
       convert = voc[ch]
       X[idx] = convert
     Xs.append(X)
-    y = [0.]*4
+    y = [0.]*len(idx_name)
     y[i] = 1.
     Ys.append(y)
 X_train, X_test, y_train, y_test = train_test_split( Xs, Ys, test_size=0.2, random_state=42)
-print("idx name len %d"%len(idx_name))
 #print(y_train)
 sequence_length = maxlen
 vocabulary_size = maxwords
