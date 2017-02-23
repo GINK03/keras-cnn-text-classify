@@ -138,7 +138,7 @@ def pred():
       max_ent = sorted([(i,e) for i,e in enumerate(list(result))], key=lambda x:x[1]*-1)
       for ent in max_ent[:10]:
         id, prob = ent
-        print(idx_name.get(id).split('/').pop().split('.').pop(0), "%%d"%prob*100)
+        print(idx_name.get(id).split('/').pop().split('.').pop(0), "%d"%(int(float(prob)*100)) + "%" )
 
 if __name__ == '__main__':
   if '--train' in sys.argv:
