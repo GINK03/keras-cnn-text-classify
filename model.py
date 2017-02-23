@@ -4,7 +4,6 @@ from keras.layers import Input, Dense, Embedding, merge, Convolution2D, MaxPooli
 from sklearn.cross_validation import train_test_split
 from keras.layers.core import Reshape, Flatten
 from keras.callbacks import ModelCheckpoint
-from data_helpers import load_data
 from keras.optimizers import Adam
 from keras.models import Model, load_model
 from glob import glob
@@ -47,7 +46,6 @@ def build_model(sequence_length=None, filter_sizes=None, embedding_dim=None, voc
 
   # this creates a model that includes
   model = Model(input=inputs, output=output)
-  #adam = Adam(lr=1e-4, beta_1=0.9, beta_2=0.999, epsilon=1e-08)
   adam = Adam()
   model.compile(optimizer=adam, loss='categorical_crossentropy', metrics=['accuracy'])
 
@@ -55,15 +53,13 @@ def build_model(sequence_length=None, filter_sizes=None, embedding_dim=None, voc
 
 def init_train():
   print('Loading data')
-  #x, y, vocabulary, vocabulary_inv = load_data()
-  #X_train, X_test, y_train, y_test = train_test_split( x, y, test_size=0.2, random_state=42)
   Xs = []
   Ys = []
   voc = {}
   maxlen = 0
   maxwords = 0
   buff = set()
-  TARGET_DIR = 'data.o/*'
+  TARGET_DIR = 'data/*'
   idx_name = {}
   for i, filename in enumerate(glob(TARGET_DIR)):
     idx_name[i] = filename
@@ -94,7 +90,6 @@ def init_train():
   X_train, X_test, y_train, y_test = train_test_split( Xs, Ys, test_size=0.1, random_state=42)
   open('vod.pkl', 'wb').write(pickle.dumps(voc))
   open('idx_name.pkl', 'wb').write(pickle.dumps(idx_name))
-  #print(y_train)
   sequence_length = maxlen
   vocabulary_size = maxwords
   embedding_dim   = 256*1
@@ -106,6 +101,7 @@ def init_train():
   batch_size = 30
   return sequence_length, embedding_dim, filter_sizes, vocabulary_size, num_filters, drop, idx_name, \
   	X_train, X_test, y_train, y_test, batch_size, nb_epoch, Xs, Ys
+
 def train():
   sequence_length, embedding_dim, filter_sizes, vocabulary_size, num_filters, drop, idx_name, \
   	X_train, X_test, y_train, y_test, batch_size, nb_epoch, Xs, Ys = init_train()
@@ -116,7 +112,6 @@ def train():
 	num_filters=num_filters, \
 	drop=drop, \
 	idx_name=idx_name)
-  #checkpoint = ModelCheckpoint('weights.{epoch:03d}-{val_acc:.4f}.hdf5', monitor='val_acc', verbose=1, save_best_only=True, mode='auto')
   if '--all' in sys.argv:
     model.fit(Xs, Ys, batch_size=batch_size, nb_epoch=nb_epoch, verbose=1, validation_data=(X_test, y_test))
     model.save('cnn_text_clsfic_all.model')
@@ -143,7 +138,8 @@ def pred():
       max_ent = sorted([(i,e) for i,e in enumerate(list(result))], key=lambda x:x[1]*-1)
       for ent in max_ent[:10]:
         id, prob = ent
-        print(idx_name.get(id).split('/').pop(), prob)
+        print(idx_name.get(id).split('/').pop().split('.').pop(0), "%%d"%prob*100)
+
 if __name__ == '__main__':
   if '--train' in sys.argv:
     train()
