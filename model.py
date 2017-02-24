@@ -40,14 +40,12 @@ def build_model(sequence_length=None, filter_sizes=None, embedding_dim=None, voc
 
   merged_tensor = merge([maxpool_0, maxpool_0_1, maxpool_1, maxpool_1_1, maxpool_2, maxpool_2_1, maxpool_3, maxpool_4], mode='concat', concat_axis=1)
   flatten = Flatten()(merged_tensor)
-  # reshape = Reshape((3*num_filters,))(merged_tensor)
   dropout = Dropout(drop)(flatten)
   output = Dense(output_dim=len(idx_name), activation='softmax')(dropout)
 
-  # this creates a model that includes
   model = Model(input=inputs, output=output)
   adam = Adam()
-  model.compile(optimizer=adam, loss='categorical_crossentropy', metrics=['accuracy'])
+  model.compile(optimizer=adam, loss='poisson', metrics=['accuracy'])
 
   return model
 
@@ -97,7 +95,7 @@ def init_train():
   num_filters     = 512*1
   drop            = 0.5
 
-  nb_epoch   = 20
+  nb_epoch   = 10
   batch_size = 30
   return sequence_length, embedding_dim, filter_sizes, vocabulary_size, num_filters, drop, idx_name, \
   	X_train, X_test, y_train, y_test, batch_size, nb_epoch, Xs, Ys
@@ -124,7 +122,7 @@ def pred():
   maxlen = voc['___META_MAXLEN___']
   maxwords = voc['___META_MAXWORD___']
   idx_name = pickle.loads(open('idx_name.pkl', 'rb').read())
-  model = load_model('cnn_text_clsfic_all.model')
+  model = load_model('cnn_text_clsfic.model')
   for line in sys.stdin:
     line = line.strip()
     buff = [maxwords]*maxlen
@@ -134,10 +132,22 @@ def pred():
       else:
         buff[i] = voc.get(ch)
     results = model.predict(np.array([buff]), verbose=0)
+    preds = results#np.log(results) / 1.0
+    exp_preds = np.exp(preds)
+    preds = exp_preds / np.sum(exp_preds)
     for result in results:
-      max_ent = sorted([(i,e) for i,e in enumerate(list(result))], key=lambda x:x[1]*-1)
-      for ent in max_ent[:10]:
+      logsoftmax = np.log(result)
+      max_ent = list(sorted([(i,e) for i,e in enumerate(list(logsoftmax))], key=lambda x:x[1]*-1))[:10]
+      _, mini = min(max_ent, key=lambda x:x[1])
+      _, maxi = max(max_ent, key=lambda x:x[1])
+      base = maxi - mini
+      for ent in max_ent:
         id, prob = ent
+        prob = (prob - mini)/base
+        if int(float(prob)*100) == 0: 
+          prob += .01
+        #print(mini)
+        #print(prob)
         print(idx_name.get(id).split('/').pop().split('.').pop(0), "%d"%(int(float(prob)*100)) + "%" )
 
 if __name__ == '__main__':
