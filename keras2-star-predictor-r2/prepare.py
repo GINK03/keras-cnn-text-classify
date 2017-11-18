@@ -60,7 +60,7 @@ if '--check_max_size' in sys.argv:
     maxs.append(len(text)) 
   width = max(maxs)
   open('width.pkl', 'wb').write( pickle.dumps(width) )
-
+import numpy as np
 def _map2(arr):
   fi, line = arr
 
@@ -80,7 +80,10 @@ def _map2(arr):
       break
 
   star = float(star)
+  base = np.array(base)
+  print('now iter', fi)
   open('pairs/{:09d}.pkl.gz'.format(fi), 'wb').write( gzip.compress(pickle.dumps( (star, base) ) ) ) 
+
 if '--make_pair' in sys.argv:
   char_index = pickle.loads( gzip.decompress(open('char_index.pkl.gz','rb').read() ) )
   size = len(char_index)
@@ -96,5 +99,5 @@ if '--make_pair' in sys.argv:
     line = line.strip()
     arrs.append( (fi, line) ) 
   
-  with concurrent.futures.ProcessPoolExecutor(max_workers=16) as exe:
+  with concurrent.futures.ProcessPoolExecutor(max_workers=64) as exe:
     exe.map(_map2, arrs)
