@@ -63,23 +63,29 @@ if '--check_max_size' in sys.argv:
 
 def _map2(arr):
   fi, line = arr
+
+  if os.path.exists('pairs/{:09d}.pkl.gz'.format(fi)) is True:
+    return "Already processed."
   try:
     star, text = line.split(' __SEP__ ')
   except ValueError as e:
     return 
-
+  
   base = [ [0.0]*size for i in range(width) ]
   for index, ch in enumerate( list(text) ):
-    print( char_index[ch] )
-    base[index][ char_index[ch] ] = 1.0
+    #print( char_index[ch] )
+    try:
+      base[index][ char_index[ch] ] = 1.0
+    except Exception as e:
+      break
 
   star = float(star)
   open('pairs/{:09d}.pkl.gz'.format(fi), 'wb').write( gzip.compress(pickle.dumps( (star, base) ) ) ) 
-
 if '--make_pair' in sys.argv:
   char_index = pickle.loads( gzip.decompress(open('char_index.pkl.gz','rb').read() ) )
   size = len(char_index)
-  width = pickle.loads( open('width.pkl', 'rb').read() ) 
+  #width = pickle.loads( open('width.pkl', 'rb').read() ) 
+  width = 100
 
   f = open('rakuten_reviews.txt')
 
@@ -90,5 +96,5 @@ if '--make_pair' in sys.argv:
     line = line.strip()
     arrs.append( (fi, line) ) 
   
-  with concurrent.futures.ProcessPoolExecutor(max_workers=5) as exe:
+  with concurrent.futures.ProcessPoolExecutor(max_workers=16) as exe:
     exe.map(_map2, arrs)
