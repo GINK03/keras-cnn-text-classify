@@ -74,10 +74,10 @@ if '--train' in sys.argv:
   except Exception as e:
     print(e)
     ...
-  for i in range(init, 1000):
+  for i in range(init, 5000):
     files = glob.glob('pairs/*.pkl.gz')
     ys, Xs = [], []
-    for name in random.sample(files, 1000):
+    for name in random.sample(files, 2000):
       try:
         y, X = pickle.loads( gzip.decompress( open(name, 'rb').read() ) )
       except EOFError as e:
@@ -86,5 +86,5 @@ if '--train' in sys.argv:
       ys.append(y)
       Xs.append(X)
     ys,Xs = np.array(ys), np.array(Xs)
-    model.fit(Xs, ys, epochs=10)
+    model.fit(Xs, ys, epochs=10, batch_size=64)
     model.save_weights('models/{:09d}.h5'.format(i))
