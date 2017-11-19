@@ -14,3 +14,25 @@
 [Dropbox Public](https://www.dropbox.com/s/vgpevezmkqtn5d1/rakuten_reviews.txt?dl=0)
 
 ## テキストのベクトル化
+テキストのベクトル化には、char一文字あたりにindexを割り当て、レビューが最大100文字だとして、100文字から星の数を予想します。  
+100文字を超えた場合は今回は切り捨てていますが、ほとんどのレビューはこの班員内に収まりました。  
+
+<あとで図を入れる>
+
+## データセットの作成
+いくつかの簡単なスクリプトの一連のデータセット作成までの前処理の操作を、ラップアップしました
+
+**charと対応するindexを作成します**
+```console
+$ python3 prepare.py --make_char_index
+```
+
+**文字列の最大長を計算します（今回は未使用）**
+```console
+$ python3 prepare.py --check_max_size
+```
+
+**データセットを作成します**
+```console
+$ python3 prepare.py --make_pair
+```
