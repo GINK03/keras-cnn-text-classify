@@ -6,6 +6,7 @@ import os
 import sys
 import statistics
 import glob
+import re
 from keras.preprocessing.image import ImageDataGenerator
 from keras.models import Sequential, Model, load_model
 from keras.layers import Lambda, Input, Activation, Dropout, Flatten, Dense, Reshape, merge
@@ -35,12 +36,21 @@ def DBRD(inputs, units=4096, droprate=0.35):
 input_tensor = Input( shape=(100, 3793) )
 
 x = Dense(3000, activation='relu')(input_tensor)
+x = CBRD(x, 16)
+x = CBRD(x, 16)
+x = MaxPool1D()(x)
+
 x = CBRD(x, 32)
 x = CBRD(x, 32)
 x = MaxPool1D()(x)
 
 x = CBRD(x, 64)
 x = CBRD(x, 64)
+x = MaxPool1D()(x)
+
+x = CBRD(x, 128)
+x = CBRD(x, 128)
+x = CBRD(x, 128)
 x = MaxPool1D()(x)
 
 x = CBRD(x, 128)
@@ -52,11 +62,19 @@ x = Flatten()(x)
 x = Dense(1, activation='linear')(x)
 
 model = Model(inputs=input_tensor, outputs=x)
-model.compile(loss='mae', optimizer='adam')
+model.compile(loss='mae', optimizer='sgd')
 
 if '--train' in sys.argv:
-
-  for i in range(1000):
+  init = 0
+  try:
+    target_model = sorted(glob.glob('models/*.h5'))[-1]
+    model.load_weights( target_model ) 
+    init = int( re.search(r'/(\d{1,}).h5', target_model).group(1) )
+    print('init state update', init)
+  except Exception as e:
+    print(e)
+    ...
+  for i in range(init, 1000):
     files = glob.glob('pairs/*.pkl.gz')
     ys, Xs = [], []
     for name in random.sample(files, 1000):
