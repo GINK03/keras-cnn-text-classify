@@ -35,7 +35,8 @@ def DBRD(inputs, units=4096, droprate=0.35):
 
 input_tensor = Input( shape=(200, 4954) )
 
-x = Dense(3000, activation='relu')(input_tensor)
+#x = Dense(4000, activation='relu')(input_tensor)
+x = input_tensor
 x = CBRD(x, 16)
 x = CBRD(x, 16)
 x = MaxPool1D()(x)
@@ -59,11 +60,9 @@ x = CBRD(x, 128)
 x = MaxPool1D()(x)
 
 x = Flatten()(x)
-print( x.shape )
-x = Dense(10000, name='a', activation='sigmoid')(x)
-print( x.shape )
+x = Dense(10000, name='dense_last', activation='sigmoid')(x)
 model = Model(inputs=input_tensor, outputs=x)
-model.compile(loss='mae', optimizer='sgd')
+model.compile(loss='binary_crossentropy', optimizer='adam')
 
 if '--train' in sys.argv:
   init = 0
@@ -78,7 +77,7 @@ if '--train' in sys.argv:
   for i in range(init, 5000):
     files = glob.glob('pairs/*.pkl.gz')
     ys, Xs = [], []
-    for name in random.sample(files, 200):
+    for name in random.sample(files, 500):
       try:
         X, y = pickle.loads( gzip.decompress( open(name, 'rb').read() ) )
       except EOFError as e:
@@ -88,4 +87,5 @@ if '--train' in sys.argv:
       Xs.append(X)
     ys,Xs = np.array(ys), np.array(Xs)
     model.fit(Xs, ys, epochs=10, batch_size=64)
-    model.save_weights('models/{:09d}.h5'.format(i))
+    if i%5 == 0:
+      model.save_weights('models/{:09d}.h5'.format(i))
