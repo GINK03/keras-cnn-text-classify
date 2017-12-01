@@ -101,7 +101,7 @@ if '--make_pair' in sys.argv:
       baseY[Yi] = 1.0 
 
     try:
-      open(save_name, 'wb').write( gzip.compress(pickle.dumps( ( baseX, baseY ) ) ) )
+      open(save_name, 'wb').write( gzip.compress(pickle.dumps( ( name, baseX, baseY ) ) ) )
     except OSError as ex:
       continue
     print( name )

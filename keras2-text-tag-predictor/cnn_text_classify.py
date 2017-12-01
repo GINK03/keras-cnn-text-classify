@@ -7,6 +7,7 @@ import sys
 import statistics
 import glob
 import re
+import json
 from keras.preprocessing.image import ImageDataGenerator
 from keras.models import Sequential, Model, load_model
 from keras.layers import Lambda, Input, Activation, Dropout, Flatten, Dense, Reshape, merge
@@ -89,3 +90,12 @@ if '--train' in sys.argv:
     model.fit(Xs, ys, epochs=10, batch_size=64)
     if i%5 == 0:
       model.save_weights('models/{:09d}.h5'.format(i))
+
+if '--pred' in sys.argv:
+  
+  tag_index = json.loads( open('tag_index.json').read() )
+  index_tag = { tag:index for tag, index in tag_index.items() }
+  target_model = sorted(glob.glob('models/*.h5'))[-1]
+  model.load_weights( target_model ) 
+
+  
