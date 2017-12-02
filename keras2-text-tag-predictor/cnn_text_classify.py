@@ -78,24 +78,37 @@ if '--train' in sys.argv:
   for i in range(init, 5000):
     files = glob.glob('pairs/*.pkl.gz')
     ys, Xs = [], []
-    for name in random.sample(files, 500):
+    for name in random.sample(files, 1000):
       try:
-        X, y = pickle.loads( gzip.decompress( open(name, 'rb').read() ) )
+        name, X, y = pickle.loads( gzip.decompress( open(name, 'rb').read() ) )
+        print(name)
       except EOFError as e:
         continue
       #print( X.shape )
       ys.append(y)
       Xs.append(X)
     ys,Xs = np.array(ys), np.array(Xs)
-    model.fit(Xs, ys, epochs=10, batch_size=64)
+    model.fit(Xs, ys, epochs=2, batch_size=64)
     if i%5 == 0:
       model.save_weights('models/{:09d}.h5'.format(i))
 
 if '--pred' in sys.argv:
   
   tag_index = json.loads( open('tag_index.json').read() )
-  index_tag = { tag:index for tag, index in tag_index.items() }
+  index_tag = { index:tag for tag, index in tag_index.items() }
   target_model = sorted(glob.glob('models/*.h5'))[-1]
   model.load_weights( target_model ) 
 
-  
+  for name in glob.glob('pairs/*'):
+    try:
+      name, X, y = pickle.loads( gzip.decompress( open(name, 'rb').read() ) )
+      print(name)
+    except EOFError as e:
+      continue
+
+    yp = model.predict(np.array([X]))
+    ws = sorted( { index:weight for index, weight in enumerate(yp.tolist()[0]) }.items(), key=lambda x:x[1]*-1 )[:10]
+    for w in ws:
+      index, score = w
+      tag = index_tag[index]
+      print(index, tag, score)
